@@ -1,9 +1,12 @@
 import * as React from "react";
 import { ethers } from "ethers";
 import './App.css';
+import abi from "./utils/WavePortal.json"
 
 export default function App() {
   const [currAccount, setCurrentAccount] = React.useState()
+  const contractAddress = "0x130B2CCc3331c0986fe5D5454b0AC8a9C3a34D75"
+  const contractABI = abi.abi
 
   console.log(currAccount)
 
@@ -47,8 +50,22 @@ export default function App() {
     checkIfWalletIsConnected()
   },[])
 
-  const wave = () => {
-    
+  const wave = async () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum)
+    const signer = provider.getSigner()
+    const waveportalContract = new ethers.Contract(contractAddress, contractABI, signer)
+
+    let count = await waveportalContract.getTotalWaves()
+    console.log("Retrieved total wave count...", count.toNumber())
+
+    const waveTxn = await waveportalContract.wave()
+    console.log("Mining...", waveTxn.hash)
+
+    await waveTxn.wait()
+    console.log("Mined -- ", waveTxn.hash)
+
+    count = await waveportalContract.getTotalWaves()
+    console.log("Retreived total wave count...", count.toNumber())
   }
   
   return (
@@ -60,7 +77,7 @@ export default function App() {
         </div>
 
         <div className="bio">
-        I am farza and I worked on self-driving cars so that's pretty cool right? Connect your Ethereum wallet and wave at me!
+          Connect your Ethereum wallet and wave at me!
         </div>
 
         <button className="waveButton" onClick={wave}>
