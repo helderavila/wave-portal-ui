@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/accessible-emoji */
 /* eslint-disable react-hooks/exhaustive-deps */
 import * as React from "react";
 import { ethers } from "ethers";
