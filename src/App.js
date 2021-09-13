@@ -9,7 +9,7 @@ export default function App() {
   const [allWaves, setAllWaves] = React.useState([])
   const [waveText, setWaveText] = React.useState('')
 
-  const contractAddress = "0x7297114BFae0488853179dfE3adAb48fc53Fb313"
+  const contractAddress = "0x91d6D1C0665Ac1E42422Ae48b2306C89214664b1"
   const contractABI = abi.abi
 
   const getAllWaves = async () => {
@@ -109,18 +109,20 @@ export default function App() {
           Connect your Ethereum wallet and wave at me!
         </div>
 
-        <input 
-          className="waveInput" 
-          value={waveText} 
-          onChange={(e) => setWaveText(e.target.value)}
-          placeholder="Your message"
-        />
+        {currAccount ? (
+          <>
+            <input 
+              className="waveInput" 
+              value={waveText} 
+              onChange={(e) => setWaveText(e.target.value)}
+              placeholder="Your message"
+            />
 
-        <button disabled={loading} className="waveButton" onClick={wave}>
-          {loading ? 'Sending wave...' : 'Wave at Me'}
-        </button>
-
-        {!currAccount && (
+            <button disabled={loading} className="waveButton" onClick={wave}>
+              {loading ? 'Sending wave...' : 'Wave at Me'}
+            </button>
+          </>
+        ) : (
           <button className="waveButton" onClick={connectWallet}>
             Connect wallet
           </button>
