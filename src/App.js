@@ -5,10 +5,33 @@ import abi from "./utils/WavePortal.json"
 
 export default function App() {
   const [currAccount, setCurrentAccount] = React.useState()
-  const contractAddress = "0x130B2CCc3331c0986fe5D5454b0AC8a9C3a34D75"
+  const [loading, setLoading] = React.useState(false)
+  const [allWaves, setAllWaves] = React.useState([])
+
+  const contractAddress = "0x7297114BFae0488853179dfE3adAb48fc53Fb313"
   const contractABI = abi.abi
 
-  console.log(currAccount)
+  const getAllWaves = async () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum)
+    const signer = provider.getSigner()
+    const waveportalContract = new ethers.Contract(contractAddress, contractABI, signer)
+
+    let waves = await waveportalContract.getAllWaves()
+
+    let wavesCleaned = []
+
+    waves.forEach(wave => {
+      wavesCleaned.push({
+        address: wave.waver,
+        timestamp: new Date(wave.timestamp * 1000),
+        message: wave.message
+      })
+    })
+
+    console.log(wavesCleaned)
+
+    setAllWaves(wavesCleaned)
+  }
 
   const checkIfWalletIsConnected = () => {
     const { ethereum } = window
@@ -27,6 +50,7 @@ export default function App() {
         console.log("Found an authrozied account: ", account)
 
         setCurrentAccount(account)
+        getAllWaves()
       } else {
         console.log("No authorized account found")
       }
@@ -58,11 +82,13 @@ export default function App() {
     let count = await waveportalContract.getTotalWaves()
     console.log("Retrieved total wave count...", count.toNumber())
 
-    const waveTxn = await waveportalContract.wave()
+    const waveTxn = await waveportalContract.wave("Hello World")
+    setLoading(true)
     console.log("Mining...", waveTxn.hash)
 
     await waveTxn.wait()
     console.log("Mined -- ", waveTxn.hash)
+    setLoading(false)
 
     count = await waveportalContract.getTotalWaves()
     console.log("Retreived total wave count...", count.toNumber())
@@ -80,8 +106,8 @@ export default function App() {
           Connect your Ethereum wallet and wave at me!
         </div>
 
-        <button className="waveButton" onClick={wave}>
-          Wave at Me
+        <button disabled={loading} className="waveButton" onClick={wave}>
+          {loading ? 'Sending wave...' : 'Wave at Me'}
         </button>
 
         {!currAccount && (
@@ -89,6 +115,14 @@ export default function App() {
             Connect wallet
           </button>
         )}
+
+        {allWaves.map((wave, index) => (
+          <div key={index} style={{ backgroundColor: 'OldLace', marginTop: "16px", padding: "8px" }}>
+            <div>Address: {wave.address}</div>
+            <div>Time: {wave.timestamp.toString()}</div>
+            <div>Message: {wave.message}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
