@@ -7,6 +7,7 @@ export default function App() {
   const [currAccount, setCurrentAccount] = React.useState()
   const [loading, setLoading] = React.useState(false)
   const [allWaves, setAllWaves] = React.useState([])
+  const [waveText, setWaveText] = React.useState('')
 
   const contractAddress = "0x7297114BFae0488853179dfE3adAb48fc53Fb313"
   const contractABI = abi.abi
@@ -75,6 +76,7 @@ export default function App() {
   },[])
 
   const wave = async () => {
+    if (!waveText) return
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner()
     const waveportalContract = new ethers.Contract(contractAddress, contractABI, signer)
@@ -82,13 +84,14 @@ export default function App() {
     let count = await waveportalContract.getTotalWaves()
     console.log("Retrieved total wave count...", count.toNumber())
 
-    const waveTxn = await waveportalContract.wave("Hello World")
+    const waveTxn = await waveportalContract.wave(waveText)
     setLoading(true)
     console.log("Mining...", waveTxn.hash)
 
     await waveTxn.wait()
     console.log("Mined -- ", waveTxn.hash)
     setLoading(false)
+    setWaveText('')
 
     count = await waveportalContract.getTotalWaves()
     console.log("Retreived total wave count...", count.toNumber())
@@ -105,6 +108,13 @@ export default function App() {
         <div className="bio">
           Connect your Ethereum wallet and wave at me!
         </div>
+
+        <input 
+          className="waveInput" 
+          value={waveText} 
+          onChange={(e) => setWaveText(e.target.value)}
+          placeholder="Your message"
+        />
 
         <button disabled={loading} className="waveButton" onClick={wave}>
           {loading ? 'Sending wave...' : 'Wave at Me'}

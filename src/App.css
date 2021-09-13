@@ -32,3 +32,10 @@
   border-radius: 5px;
   
 }
+
+.waveInput {
+  margin-top: 16px;
+  padding: 8px;
+  border: 1px solid #eee;
+  border-radius: 5px;
+}
