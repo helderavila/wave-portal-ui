@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import * as React from "react";
 import { ethers } from "ethers";
 import './App.css';
@@ -9,7 +10,7 @@ export default function App() {
   const [allWaves, setAllWaves] = React.useState([])
   const [waveText, setWaveText] = React.useState('')
 
-  const contractAddress = "0x91d6D1C0665Ac1E42422Ae48b2306C89214664b1"
+  const contractAddress = "0x51fcab301967Aa88662DE3d66145410060Ec9A15"
   const contractABI = abi.abi
 
   const getAllWaves = async () => {
@@ -17,21 +18,25 @@ export default function App() {
     const signer = provider.getSigner()
     const waveportalContract = new ethers.Contract(contractAddress, contractABI, signer)
 
-    let waves = await waveportalContract.getAllWaves()
+    const response = await waveportalContract.getAllWaves()
 
-    let wavesCleaned = []
+    const waves = response.map(wave => ({
+      address: wave.waver,
+      timestamp: new Date(wave.timestamp * 1000),
+      message: wave.message
+    }))
 
-    waves.forEach(wave => {
-      wavesCleaned.push({
-        address: wave.waver,
-        timestamp: new Date(wave.timestamp * 1000),
-        message: wave.message
-      })
+    console.log(waves)
+    setAllWaves(waves)
+
+    waveportalContract.on("NewWave", (from, timestamp, message) => {
+      console.log("NewWave", from, timestamp, message)
+      setAllWaves(oldArray => [...oldArray, {
+        address: from,
+        timestamp: new Date(timestamp * 1000),
+        message: message
+      }])
     })
-
-    console.log(wavesCleaned)
-
-    setAllWaves(wavesCleaned)
   }
 
   const checkIfWalletIsConnected = () => {
@@ -84,7 +89,7 @@ export default function App() {
     let count = await waveportalContract.getTotalWaves()
     console.log("Retrieved total wave count...", count.toNumber())
 
-    const waveTxn = await waveportalContract.wave(waveText)
+    const waveTxn = await waveportalContract.wave(waveText, { gasLimit: 300000 })
     setLoading(true)
     console.log("Mining...", waveTxn.hash)
 
@@ -106,6 +111,7 @@ export default function App() {
         </div>
 
         <div className="bio">
+          My name is Helder and I'm Software Developer. <br/>
           Connect your Ethereum wallet and wave at me!
         </div>
 
