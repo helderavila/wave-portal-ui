@@ -11,7 +11,7 @@ export default function App() {
   const [allWaves, setAllWaves] = React.useState([])
   const [waveText, setWaveText] = React.useState('')
 
-  const contractAddress = "0x51fcab301967Aa88662DE3d66145410060Ec9A15"
+  const contractAddress = "0x9BdD3617Af6780a9f33b57Fd853B4259a1857A51"
   const contractABI = abi.abi
 
   const getAllWaves = async () => {
