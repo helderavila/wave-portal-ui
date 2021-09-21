@@ -14,16 +14,20 @@ import {
   Tr,
   Th,
   Td,
+  useToast,
 } from "@chakra-ui/react";
 import { ethers } from "ethers";
 
 import abi from "../utils/WavePortal.json";
 
 export default function Home() {
+  const toast = useToast();
+
   const [currAccount, setCurrentAccount] = useState();
   const [loading, setLoading] = useState(false);
   const [allWaves, setAllWaves] = useState([]);
   const [waveText, setWaveText] = useState("");
+  const [isRinkebyNetwork, setIsRinkebyNetwork] = useState(false);
 
   const contractAddress = "0x9BdD3617Af6780a9f33b57Fd853B4259a1857A51";
   const contractABI = abi.abi;
@@ -45,11 +49,9 @@ export default function Home() {
       message: wave.message,
     }));
 
-    console.log(waves);
     setAllWaves(waves);
 
     waveportalContract.on("NewWave", (from, timestamp, message) => {
-      console.log("NewWave", from, timestamp, message);
       setAllWaves((oldArray) => [
         ...oldArray,
         {
@@ -74,10 +76,15 @@ export default function Home() {
     ethereum.request({ method: "eth_accounts" }).then((accounts) => {
       if (accounts.length !== 0) {
         const account = accounts[0];
-        console.log("Found an authrozied account: ", account);
+        toast({
+          title: "Wallet connected.",
+          status: "success",
+          duration: 9000,
+          position: "top",
+          isClosable: true,
+        });
 
         setCurrentAccount(account);
-        getAllWaves();
       } else {
         console.log("No authorized account found");
       }
@@ -92,16 +99,27 @@ export default function Home() {
     ethereum
       .request({ method: "eth_requestAccounts" })
       .then((accounts) => {
-        console.log("Connected", accounts[0]);
         setCurrentAccount(accounts[0]);
-        getAllWaves()
+        toast({
+          title: "Wallet connected.",
+          status: "success",
+          duration: 9000,
+          position: "top",
+          isClosable: true,
+        });
       })
       .catch((err) => console.error(err));
   };
 
   useEffect(() => {
     checkIfWalletIsConnected();
+    addChainListener();
   }, []);
+
+
+  useEffect(() => {
+    if (currAccount && isRinkebyNetwork) getAllWaves();
+  }, [currAccount, isRinkebyNetwork]);
 
   const wave = async () => {
     try {
@@ -113,20 +131,30 @@ export default function Home() {
         contractABI,
         signer
       );
-  
+
       const waveTxn = await waveportalContract.wave(waveText, {
         gasLimit: 300000,
       });
       setLoading(true);
-  
+
       await waveTxn.wait();
       setLoading(false);
       setWaveText("");
     } catch (err) {
-      console.log(err)
+      console.log(err);
       setLoading(false);
     }
   };
+
+  async function addChainListener() {
+    if (window.ethereum) {
+      const chainId = await window.ethereum.request({ method: "eth_chainId" });
+      setIsRinkebyNetwork(chainId === "0x4");
+      window.ethereum.on("chainChanged", async (chainId) => {
+        setIsRinkebyNetwork(chainId === "0x4");
+      });
+    }
+  }
 
   return (
     <Box
@@ -152,15 +180,23 @@ export default function Home() {
 
         {currAccount ? (
           <>
-            <Input
-              value={waveText}
-              onChange={(e) => setWaveText(e.target.value)}
-              placeholder='Your message'
+            {isRinkebyNetwork && (
+              <Input
+                value={waveText}
+                onChange={(e) => setWaveText(e.target.value)}
+                placeholder='Your message'
+                mt='4'
+              />
+            )}
+            <Button
+              w='100%'
               mt='4'
-            />
-
-            <Button w='100%' mt='4' isLoading={loading} onClick={wave}>
-              {loading ? "Sending wave..." : "Wave at Me"}
+              isLoading={loading}
+              onClick={wave}
+              disabled={!isRinkebyNetwork}
+              colorScheme={isRinkebyNetwork ? "gray" : "red"}
+            >
+              {isRinkebyNetwork ? "Wave at Me" : "Wrong network"}
             </Button>
           </>
         ) : (
